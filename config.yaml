@@ -1,0 +1,18 @@
+credentials:
+  usernames:
+    rifqi:
+      email: rifqi@gmail.com
+      name: Rifqi Alghifary
+      password: $2b$12$xlW8n/1/S5LDzrx8XTKsZu0BKan6kQXY6st6dYanDHK7ZfonFKN8u
+  # usernames:
+  #   arie:
+  #     email: arie@gmail.com
+  #     name: Asyarie
+  #     password: $2b$12$TMgHhzOfPgKwVRebdUQ.1eey2vTTMXRoLLd8KsWdLj8X4loc63U0q
+cookie:
+  expiry_days: 30
+  key: some_signature_key # Must be string
+  name: some_cookie_name
+preauthorized:
+  emails:
+  - melsby@gmail.com

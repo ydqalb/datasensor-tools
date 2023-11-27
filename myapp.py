@@ -12,6 +12,8 @@ from streamlit_option_menu import option_menu
 
 from streamlit_elements import elements, dashboard, mui, editor, media, lazy, sync, nivo
 
+st.set_page_config(page_title='DataSensor-Tools', layout='wide')
+
 with st.sidebar:
     selected = option_menu("Main Menu", ["Home", 'Settings'], 
             icons=['house', 'gear'], menu_icon="cast", default_index=1)

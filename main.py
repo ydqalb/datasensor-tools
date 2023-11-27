@@ -1,15 +1,11 @@
-# UPDATED: 2 May 2022
-import pickle
-import RecoveryAccount, RecoveryKeyword, duplicateMedia, addnews
-import main_
-import pyautogui
+# import RecoveryAccount, RecoveryKeyword, duplicateMedia, addnews
+# from controller.duplicateMedia import duplicate_func
 import datetime, re, yaml, time
 import numpy as np
 import streamlit as st
 import pandas as pd
 import mysql.connector
 import helper as h
-import streamlit_authenticator as stauth
 import plotly.express as px
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
@@ -22,24 +18,37 @@ from streamlit_extras.altex import line_chart, get_stocks_data, sparkline_chart
 from streamlit_extras.metric_cards import style_metric_cards
 from streamlit_elements import elements, mui, html, nivo
 
-# https://discuss.streamlit.io/t/streamlit-option-menu-is-a-simple-streamlit-component-that-allows-users-to-select-a-single-item-from-a-list-of-options-in-a-menu
-# https://icons.getbootstrap.com/
-
-
 st.set_page_config(page_title='DataSensor-Tools', layout='wide')
 
-with open('config.yaml') as file:
-    config = yaml.load(file, Loader=SafeLoader)
 
-authenticator = stauth.Authenticate(
-    config['credentials'],
-    config['cookie']['name'],
-    config['cookie']['key'],
-    config['cookie']['expiry_days'],
-    config['preauthorized']
-)
-
-name, authentication_status, username = authenticator.login('Login', 'main')
+def style_metric_cards(
+        background_color: str = "#191919",
+        border_size_px: int = 1,
+        border_color: str = "#CCC",
+        border_radius_px: int = 5,
+        border_left_color: str = "#4f70d4",
+        box_shadow: bool = True,
+):
+    box_shadow_str = (
+        "box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15) !important;"
+        if box_shadow
+        else "box-shadow: none !important;"
+    )
+    st.markdown(
+        f"""
+        <style>
+            div[data-testid="metric-container"] {{
+                background-color: {background_color};
+                border: {border_size_px}px solid {border_color};
+                padding: 5% 5% 5% 10%;
+                border-radius: {border_radius_px}px;
+                border-left: 0.5rem solid {border_left_color} !important;
+                {box_shadow_str}
+            }}
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 def home():
@@ -111,9 +120,19 @@ def home():
 
     stathttpd, statcrond = st.columns(2)
     with stathttpd:
-        st.success("[2023-09-26 15:00:00] 192.168.150.114 - httpd is running...")
+        st.text('Service httpd')
+        with open('../log/checkstatushttpdchandate_114.txt', 'r') as httpd114:
+            st.warning(f"{httpd114.readlines()[-1]}")
+        with open('../log/checkstatushttpdchandate_137.txt', 'r') as httpd137:
+            st.warning(f"{httpd137.readlines()[-1]}")
     with statcrond:
-        st.success("[2023-09-26 15:00:00] 192.168.150.16 - crond is running...")
+        st.text('Service crond')
+        with open('../log/checkstatuscrondchandate_114.txt', 'r') as crond114:
+            st.warning(f"{crond114.readlines()[-1]}")
+        with open('../log/checkstatuscrondchandate_137.txt', 'r') as crond137:
+            st.warning(f"{crond137.readlines()[-1]}")
+        with open('../log/checkstatuscrondchandate_16.txt', 'r') as crond16:
+            st.warning(f"{crond16.readlines()[-1]}")
 
     server1, server2 = st.columns(2)
     with server1:
@@ -189,18 +208,6 @@ def recovery_keyword():
     RecoveryKeyword.recovery_keyword_func()
 
 
-def profile():
-    with st.form("form edit"):
-        st.markdown("<h4 style='text-align: center; color: black;'>Edit Profile</h4>",
-                    unsafe_allow_html=True)
-        st.text_input("Full Name", f"{name}")
-        st.text_input("Username", "rifqi")
-        st.text_input("Password", "abc", type="password")
-        st.form_submit_button("Change")
-
-    authenticator.logout('Logout', 'main')
-
-
 def do_logs():
     st.text_input('Search Media :')
 
@@ -210,7 +217,80 @@ def add_news():
 
 
 def duplicate_media():
-    duplicateMedia.duplicate_func()
+    with st.form('my_form'):
+        media = st.text_input('Search Baselink :')
+        st.form_submit_button('Search')
+
+    dbsc = mysql.connector.connect(
+            host = "159.65.134.198",
+            user = "sc",
+            port = "33569",
+            password = "Rahasia@sc",
+            database = "smart_crawler"
+        )
+    cursorsc = dbsc.cursor()
+    cursorsc.execute(f"SELECT * FROM master_media_tag_ON WHERE baselink LIKE '%{media}%' limit 5")
+    rowsc = cursorsc.fetchall()
+
+    dbv2 = mysql.connector.connect(
+            host = "159.65.134.198",
+            user = "sc",
+            port = "33569",
+            password = "Rahasia@sc",
+            database = "clipper"
+        )
+    cursorv2 = dbv2.cursor()
+    cursorv2.execute(f"SELECT * FROM media WHERE base_url LIKE '%{media}%' limit 5")
+    rowv2 = cursorv2.fetchall()
+
+    mediasc = []
+    screen_name = []
+    baselinksc = []
+
+    id_mediav2 = []
+    mediav2 = []
+    baselinkv2 = []
+    created_at = []
+    lastUpdateV2 = []
+
+    for datasc in rowsc:
+        mediasc.append(datasc[0])
+        screen_name.append(datasc[1])
+        baselinksc.append(datasc[3])
+
+    for datav2 in rowv2:
+        id_mediav2.append(datav2[0])
+        mediav2.append(datav2[1])
+        baselinkv2.append(datav2[3])
+        created_at.append(datav2[8])
+        lastUpdateV2.append(datav2[9])
+
+    if bool(rowsc) is True or bool(rowv2) is True:
+        statSC, statV2 = st.columns(2)
+        with statSC:
+            st.warning("Database SC")
+            dfsc = pd.DataFrame({
+            'Media': mediasc,
+            'Screen Name': screen_name,
+            'Baselink': baselinksc,
+            })
+            st.write(dfsc)
+
+        with statV2:
+            st.warning("Database V2")
+            dfv2 = pd.DataFrame({
+            'ID Media': id_mediav2,
+            'Media ': mediav2,
+            'Baselink': baselinkv2,
+            'Created At': created_at,
+            'Last Update': lastUpdateV2
+            })
+            st.write(dfv2)
+    elif bool(rowsc) is False or bool(rowv2) is False:
+        pass
+    else:
+        st.error('Media tidak ditemukan!')
+    # duplicate_func()
 
 
 styles = {
@@ -274,20 +354,6 @@ menu = {
         #         'styles': styles
         #     }
         # },
-        f'{name}': {
-            'action': None, 'item_icon': 'person-circle', 'submenu': {
-                'title': None,
-                'items': {
-                    'Profile': {'action': profile, 'item_icon': 'person-circle', 'submenu': None},
-                    # 'View Logs': {'action': do_logs, 'item_icon': 'journals', 'submenu': None},
-                },
-                'menu_icon': None,
-                'default_index': 0,
-                'with_view_panel': 'main',
-                'orientation': 'horizontal',
-                'styles': styles
-            }
-        },
     },
     'menu_icon': 'cast',
     'default_index': 0,
@@ -333,10 +399,5 @@ def show_menu(menu):
         menu['items'][menu_selection]['action']()
 
 
-print(st.session_state)
-if st.session_state["authentication_status"]:
+if __name__ == "__main__":
     show_menu(menu)
-elif st.session_state["authentication_status"] is False:
-    st.error('Username/password is incorrect')
-elif st.session_state["authentication_status"] is None:
-    st.warning('Please enter your username and password')
